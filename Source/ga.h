@@ -6,10 +6,11 @@ using namespace std;
 
 extern int ga_popsize;
 extern int ga_ngen;
-extern int ga_pc;
-extern int ga_pm;
+extern float ga_pc;
+extern float ga_pm;
 
 int gaAllocMemory();
 int gaFreeMemory();
+void gaEvolve();
 
 #endif // !_GA_H_

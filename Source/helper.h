@@ -4,4 +4,7 @@
 #include <stdio.h>
 #include <time.h>
 
+int genRandInt(int min, int max);
+float genRandProb();
+
 #endif // !_HELPER_H_

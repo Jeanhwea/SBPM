@@ -2,9 +2,10 @@
 
 int sz_task;
 int sz_resource;
+
 float * array_duration;
-bool * matrix_depend;
-bool * matrix_assign;
+bool  * matrix_depend;
+bool  * matrix_assign;
 
 using namespace std;
 
@@ -17,16 +18,14 @@ TiXmlElement    * proot,
                 * passignments;
 
 int initElements(string full_filename);
-int allocMemory();
 int loadInfo();
 
 
 int loadXML(string full_filename) 
 {
     initElements(full_filename);
-    allocMemory();
+    dataAllocMemory();
     loadInfo();
-
     return 0;
 }
 
@@ -52,34 +51,27 @@ int initElements(string full_filename)
     return 0;
 }
 
-int allocMemory() 
+int dataAllocMemory() 
 {
     string str_size;
-    size_t sz_mem;
     str_size = psize->Attribute("TaskSize");
     sz_task = stoi(str_size);
     str_size = psize->Attribute("ResourceSize");
     sz_resource = stoi(str_size);
 
-    sz_mem = sz_task * sizeof(float);
-    array_duration = (float *) malloc(sz_mem);
-    memset(array_duration, 0, sizeof(array_duration));
+    array_duration = (float *) calloc(sz_task, sizeof(float));
     if (array_duration == 0) {
         fprintf(stderr, "Error: cannot alloc memory!!!");
         assert(0);
     }
 
-    sz_mem = sz_task * sz_task * sizeof(bool);
-    matrix_depend = (bool *) malloc(sz_mem);
-    memset(matrix_depend, 0, sizeof(matrix_depend));
+    matrix_depend = (bool *) calloc(sz_task*sz_task, sizeof(bool));
     if (matrix_depend == 0) {
         fprintf(stderr, "Error: cannot alloc memory!!!");
         assert(0);
     }
 
-    sz_mem = sz_resource * sz_task * sizeof(bool);
-    matrix_assign = (bool *) malloc(sz_mem);
-    memset(matrix_assign, 0, sizeof(matrix_assign));
+    matrix_assign = (bool *) calloc(sz_task*sz_resource, sizeof(bool));
     if (matrix_assign == 0) {
         fprintf(stderr, "Error: cannot alloc memory!!!");
         assert(0);
@@ -88,7 +80,7 @@ int allocMemory()
     return 0;
 }
 
-int freeMemory()
+int dataFreeMemory()
 {
     if (array_duration != 0) {
         free(array_duration);
@@ -138,4 +130,22 @@ int loadInfo()
     }
 
     return 0;
+}
+
+// return true if <succ> depends <pred>
+bool isDepend(int pred, int succ)
+{
+    return matrix_depend[(pred-1) + (succ-1) * sz_task];
+}
+
+// return true if <task> needs <reso>
+bool isAssign(int task, int reso)
+{
+    return matrix_assign[(task-1) + (reso-1) * sz_task];
+}
+
+// return duration of <task>
+float getDuration(int task)
+{
+    return array_duration[task-1];
 }

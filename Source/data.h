@@ -8,12 +8,13 @@ using namespace std;
 
 extern int sz_task;
 extern int sz_resource;
-extern float * array_duration;
-extern bool * matrix_depend;
-extern bool * matrix_assign;
 
 int loadXML(string full_filename);
-int allocMemory();
-int freeMemory();
+int dataAllocMemory();
+int dataFreeMemory();
+
+
+bool isDepend(int pred, int succ);
+bool isAssign(int task, int reso);
 
 #endif //!_DATA_H_
