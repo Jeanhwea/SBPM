@@ -1,9 +1,10 @@
 #include "data.h"
 
-int sz_task;
-int sz_resource;
+size_t sz_task;
+size_t sz_resource;
 
 float * array_duration;
+float * array_resource_usage;
 bool  * matrix_depend;
 bool  * matrix_assign;
 
@@ -65,6 +66,12 @@ int dataAllocMemory()
         assert(0);
     }
 
+    array_resource_usage = (float *) calloc(sz_resource, sizeof(float));
+    if (array_resource_usage == 0) {
+        fprintf(stderr, "Error: cannot alloc memory!!!");
+        assert(0);
+    }
+
     matrix_depend = (bool *) calloc(sz_task*sz_task, sizeof(bool));
     if (matrix_depend == 0) {
         fprintf(stderr, "Error: cannot alloc memory!!!");
@@ -96,6 +103,8 @@ int dataFreeMemory()
     }
     return 0;
 }
+
+
 int loadInfo()
 {
     string str_text;
@@ -132,20 +141,59 @@ int loadInfo()
     return 0;
 }
 
-// return true if <succ> depends <pred>
-bool isDepend(int pred, int succ)
+/************************************************************************/
+/* return true if <succ> depends <pred>                                 */
+/************************************************************************/
+bool isDepend(size_t pred, size_t succ)
 {
     return matrix_depend[(pred-1) + (succ-1) * sz_task];
 }
 
-// return true if <task> needs <reso>
-bool isAssign(int task, int reso)
+/************************************************************************/
+/*  return true if <task> needs <reso>                                  */
+/************************************************************************/
+bool isAssign(size_t task, size_t reso)
 {
     return matrix_assign[(task-1) + (reso-1) * sz_task];
 }
 
-// return duration of <task>
-float getDuration(int task)
+/************************************************************************/
+/* return duration of <task>                                            */
+/************************************************************************/
+float getDuration(size_t task)
 {
     return array_duration[task-1];
+}
+
+
+// ---- resource management ----
+void clearResouceUsage()
+{
+    size_t i;
+    for (i = 0; i < sz_resource; i++)
+        array_resource_usage[i] = 0.0f;
+}
+
+float allocResouce(size_t resource_id, float duration)
+{
+    array_resource_usage[resource_id-1] += duration;
+    return array_resource_usage[resource_id-1];
+}
+
+int findMinUsage()
+{
+    size_t i, ret;
+    float min;
+    
+    ret = 0;
+    min = 0.0f;
+    for (i = 0; i < sz_resource; i++) {
+        if (array_resource_usage[i] < min) {
+            min = array_resource_usage[i];
+            ret = i;
+        }
+    }
+
+    // return resource_id (ret+1)
+    return (ret+1);
 }

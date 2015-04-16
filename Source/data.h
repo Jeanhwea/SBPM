@@ -6,15 +6,16 @@
 
 using namespace std;
 
-extern int sz_task;
-extern int sz_resource;
+extern size_t sz_task;
+extern size_t sz_resource;
 
 int loadXML(string full_filename);
 int dataAllocMemory();
 int dataFreeMemory();
 
 
-bool isDepend(int pred, int succ);
-bool isAssign(int task, int reso);
+bool isDepend(size_t pred, size_t succ);
+bool isAssign(size_t task, size_t reso);
+float getDuration(size_t task);
 
 #endif //!_DATA_H_

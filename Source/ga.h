@@ -4,10 +4,8 @@
 
 using namespace std;
 
-extern int ga_popsize;
-extern int ga_ngen;
-extern float ga_pc;
-extern float ga_pm;
+extern size_t ga_popsize;
+extern size_t ga_ngen;
 
 int gaAllocMemory();
 int gaFreeMemory();

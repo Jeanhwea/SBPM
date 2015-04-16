@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     //string full_filename = "tmp/C-softchoice.com.mpp";
     string cmd = "java -jar parser.jar " + full_filename;
     int ret_code = 0;
-    ret_code = system(cmd.c_str());
+    // ret_code = system(cmd.c_str());
     cout.flush();
     if (ret_code != 0) {
         return 0;
