@@ -19,6 +19,8 @@ void gaInitPara();
 void gaInit(int * person);
 void gaCrossover(int * dad, int * mom, int * bro, int * sis);
 void gaMutation(int * person);
+void gaSelection();
+static float gaObject(int * person); // object function
 
 // private tool functions
 static bool swapBits(size_t a, size_t b, int * person);
@@ -28,13 +30,16 @@ static int * personNew(int * old_person, size_t n);
 static void personDestroy(int * person);
 static void personClear(int * person, size_t n);
 
+void scheFCFS(int * person);
+
 // debug functions
 static void dbPrintPerson(int * person, size_t n, char * tag);
 void dbDisplayWorld();
 
 void gaEvolve()
 {
-    size_t i;
+    size_t i, n;
+
 
     gaInitPara();
     gaAllocMemory();
@@ -44,16 +49,23 @@ void gaEvolve()
     }
     dbDisplayWorld();
 
-    printf("\n-----------------------------------\n");
-    for (i = 0; i < ga_popsize / 2; i++) {
-        int * dad, * mom, * bro, * sis;
-        dad = matrix_chromo + 2*i*sz_task;
-        mom = matrix_chromo + (2*i+1)*sz_task;
-        bro = dad + ga_popsize*sz_task;
-        sis = mom + ga_popsize*sz_task;
-        gaCrossover(dad, mom, bro, sis);
+    for (n = 99; n < ga_ngen; n++) {
+        printf("\n--------------- %3d -------------------\n", n);
+        for (i = 0; i < ga_popsize / 2; i++) {
+            int * dad, * mom, * bro, * sis;
+            dad = matrix_chromo + 2*i*sz_task;
+            mom = matrix_chromo + (2*i+1)*sz_task;
+            bro = dad + ga_popsize*sz_task;
+            sis = mom + ga_popsize*sz_task;
+            gaCrossover(dad, mom, bro, sis);
+        }
+        dbDisplayWorld();
+
+        float score = gaObject(matrix_chromo);
+        // dbPrintInfo();
+        printf("score = %f\n", score);
     }
-    dbDisplayWorld();
+
 
     // dbPrint(matrix_chromo, sz_task, "chromosome(001)");
     // dbPrint(matrix_chromo+sz_task, sz_task, "chromosome(002)");
@@ -91,6 +103,7 @@ void dbDisplayWorld()
 static void dbPrintPerson(int * person, size_t n, char * tag)
 {
     size_t i;
+
     printf("%s : ", tag);
     for (i = 0; i < n; i++) {
         printf("%d", person[i]);
@@ -220,6 +233,11 @@ void gaMutation(int * person)
 
 }
 
+void gaSelection()
+{
+
+}
+
 int gaAllocMemory()
 {
 
@@ -330,18 +348,48 @@ static bool check(int * person)
     return true;
 }
 
-static float calFitVal(int * person)
+static float gaObject(int * person)
 {
-    float score, dura;
-    size_t i, j, task_id;
+    float score;
+    scheFCFS(person);
+    score = getOverheadDuration();
+    return score;
+}
 
-    score = 0.0f;
+/************************************************************************/
+/* scheduler, implement FCFS (first come, first service).               */
+/************************************************************************/
+void scheFCFS(int * person)
+{
+    size_t i, r, task_id;
+
+    // set temporary data struct as 0
+    clearResouceOccupy();
     for (i = 0; i < sz_task; i++) {
         task_id = person[i];
-        dura = getDuration(task_id);
-        for (j = 0; j < sz_resource; j++) {
+        float dura = getDuration(task_id);
 
+        size_t min_id = 0;
+        float min_occ, occ;
+        for (r = 1; r <= sz_resource; r++) { // search all resources
+            if (isAssign(task_id,r)) {
+                if (min_id == 0) {
+                    min_occ = getOccupancy(r);
+                    min_id = r;
+                } else {
+                    occ = getOccupancy(r);
+                    if (occ < min_occ) {
+                        min_occ = occ;
+                        min_id = r;
+                    }
+                }
+            }
+        }
+
+        if (min_id > 0) {
+            allocResouce(task_id, min_id, dura);
+        } else {
+            allocResouce(task_id, 1, dura);
         }
     }
-    return score;
 }

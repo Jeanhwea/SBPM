@@ -14,8 +14,15 @@ int dataAllocMemory();
 int dataFreeMemory();
 
 
-bool isDepend(size_t pred, size_t succ);
-bool isAssign(size_t task, size_t reso);
-float getDuration(size_t task);
+bool isDepend(size_t pred_id, size_t succ_id);
+bool isAssign(size_t task_id, size_t reso_id);
+float getDuration(size_t task_id);
+void clearResouceOccupy();
+float allocResouce(size_t task_id, size_t resource_id, float duration);
+float getOccupancy(size_t resource_id);
+float  getOverheadDuration();
+
+// debug functions
+void dbPrintInfo();
 
 #endif //!_DATA_H_
