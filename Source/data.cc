@@ -4,7 +4,7 @@ size_t sz_task;
 size_t sz_resource;
 
 float * array_duration;
-float * array_resource_usage;
+float * matrix_reso_alloc;
 bool  * matrix_depend;
 bool  * matrix_assign;
 
@@ -66,19 +66,19 @@ int dataAllocMemory()
         assert(0);
     }
 
-    array_resource_usage = (float *) calloc(sz_resource, sizeof(float));
-    if (array_resource_usage == 0) {
+    matrix_reso_alloc = (float *) calloc(sz_task * sz_resource, sizeof(float));
+    if (matrix_reso_alloc == 0) {
         fprintf(stderr, "Error: cannot alloc memory!!!");
         assert(0);
     }
 
-    matrix_depend = (bool *) calloc(sz_task*sz_task, sizeof(bool));
+    matrix_depend = (bool *) calloc(sz_task * sz_task, sizeof(bool));
     if (matrix_depend == 0) {
         fprintf(stderr, "Error: cannot alloc memory!!!");
         assert(0);
     }
 
-    matrix_assign = (bool *) calloc(sz_task*sz_resource, sizeof(bool));
+    matrix_assign = (bool *) calloc(sz_task * sz_resource, sizeof(bool));
     if (matrix_assign == 0) {
         fprintf(stderr, "Error: cannot alloc memory!!!");
         assert(0);
@@ -169,15 +169,18 @@ float getDuration(size_t task)
 // ---- resource management ----
 void clearResouceUsage()
 {
-    size_t i;
-    for (i = 0; i < sz_resource; i++)
-        array_resource_usage[i] = 0.0f;
+    size_t i, j;
+    for (i = 0; i < sz_resource; i++) {
+        for (j = 0; j < sz_task; j++) {
+            matrix_reso_alloc[j + i * sz_task] = 0.0f;
+        }
+    }
 }
 
-float allocResouce(size_t resource_id, float duration)
+float allocResouce(size_t task_id, size_t resource_id, float duration)
 {
-    array_resource_usage[resource_id-1] += duration;
-    return array_resource_usage[resource_id-1];
+    matrix_reso_alloc[task_id + resource_id * sz_task] = duration;
+    return duration;
 }
 
 int findMinUsage()
@@ -188,10 +191,6 @@ int findMinUsage()
     ret = 0;
     min = 0.0f;
     for (i = 0; i < sz_resource; i++) {
-        if (array_resource_usage[i] < min) {
-            min = array_resource_usage[i];
-            ret = i;
-        }
     }
 
     // return resource_id (ret+1)

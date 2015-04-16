@@ -122,6 +122,9 @@ void gaInit(int * person)
     }
 }
 
+/************************************************************************/
+/* ordering-based two points crossover                                  */
+/************************************************************************/
 void gaCrossover(int * dad, int * mom, int * bro, int * sis)
 {
     size_t i, j, k, a, b;
@@ -162,7 +165,6 @@ void gaCrossover(int * dad, int * mom, int * bro, int * sis)
         // dbPrint(sis, sz_task, "sis-con");
         // dbPrint(dad_new, sz_task, "bro-ord");
         // dbPrint(mom_new, sz_task, "sis-ord");
-
         
         // copy remainder region
         i = j = 0;
@@ -199,6 +201,9 @@ void gaCrossover(int * dad, int * mom, int * bro, int * sis)
     }
 }
 
+/************************************************************************/
+/* two points swap mutation                                             */
+/************************************************************************/
 void gaMutation(int * person)
 {
     size_t a, b;
