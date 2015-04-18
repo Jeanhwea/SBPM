@@ -11,10 +11,12 @@ int main(int argc, char **argv)
 
     // call java to parse mpp files
     string full_filename = "tmp/input.mpp";
-    //string full_filename = "tmp/C-softchoice.com.mpp";
+    // string full_filename = "tmp/C-softchoice.com.mpp";
+    if (argc > 1)
+        full_filename = argv[1];
     string cmd = "java -jar parser.jar " + full_filename;
     int ret_code = 0;
-    // ret_code = system(cmd.c_str());
+    ret_code = system(cmd.c_str());
     cout.flush();
     if (ret_code != 0) {
         return 0;

@@ -11,8 +11,18 @@ float  ga_prob_mutation;
 
 // chromosome for [sz_taks * ga_popsize*2]
 int * matrix_chromo;
-// each fitvalue for echo chromosome [ga_popsize*2]
+
+
+/************************************************************************/
+/* you can get fitness value like this:                                 */
+/*      array_fitvalue[ task_id-1 ]];                    */
+/************************************************************************/
 float * array_fitvalue;
+/************************************************************************/
+/* you can get ordering of task_id like this:                           */
+/*      array_fitval_order[ task_id-1 ];                                */
+/************************************************************************/
+size_t * array_fitval_order;
 
 using namespace std;
 void gaInitPara();
@@ -29,11 +39,14 @@ static void personCopy(int * des, int * src, size_t begin, size_t n);
 static int * personNew(int * old_person, size_t n);
 static void personDestroy(int * person);
 static void personClear(int * person, size_t n);
+static void calcAllFitvalue();
+static int fitvalueCompare(const void *a, const void *b);
 
 void scheFCFS(int * person);
 
 // debug functions
 static void dbPrintPerson(int * person, size_t n, char * tag);
+static void dbPrintFitvalue();
 void dbDisplayWorld();
 
 void gaEvolve()
@@ -61,9 +74,8 @@ void gaEvolve()
         }
         dbDisplayWorld();
 
-        float score = gaObject(matrix_chromo);
         // dbPrintInfo();
-        printf("score = %f\n", score);
+        gaSelection();
     }
 
 
@@ -114,6 +126,14 @@ static void dbPrintPerson(int * person, size_t n, char * tag)
         }
     }
 
+}
+
+static void dbPrintFitvalue()
+{
+    size_t i;
+    printf("index\ttask_id\tfitval\n");
+    for (i = 0; i < ga_popsize*2; i++)
+        printf("%d\t%d\t%f\n", i, array_fitval_order[i], array_fitvalue[array_fitval_order[i]-1]);
 }
 
 void gaInit(int * person)
@@ -235,7 +255,11 @@ void gaMutation(int * person)
 
 void gaSelection()
 {
-
+    size_t i, j;
+    calcAllFitvalue();
+    dbPrintFitvalue();
+    qsort(array_fitval_order, 2*ga_popsize, sizeof(size_t), fitvalueCompare);
+    dbPrintFitvalue();
 }
 
 int gaAllocMemory()
@@ -247,6 +271,9 @@ int gaAllocMemory()
     array_fitvalue = (float *) calloc(ga_popsize * 2, sizeof(float));
     assert(array_fitvalue != 0);
 
+    array_fitval_order = (size_t *)calloc(ga_popsize * 2, sizeof(size_t));
+    assert(array_fitval_order != 0);
+
     return 0;
 }
 
@@ -256,10 +283,17 @@ int gaFreeMemory()
         free(matrix_chromo);
         matrix_chromo = 0;
     }
+
     if (array_fitvalue != 0) {
         free(array_fitvalue);
         array_fitvalue = 0;
     }
+
+    if (array_fitval_order != 0) {
+        free(array_fitval_order);
+        array_fitval_order = 0;
+    }
+
     return 0;
 }
 
@@ -393,3 +427,43 @@ void scheFCFS(int * person)
         }
     }
 }
+
+static void calcAllFitvalue()
+{
+    size_t i;
+    float score, sum;
+    // build chromosome id to fitness value index map first
+    for (i = 0; i < ga_popsize*2; i++) {
+        array_fitval_order[i] = i+1;
+    }
+    
+    // calculate all fitness value (2*ga_popsize)
+    sum = 0.0f;
+    for (i = 0; i < ga_popsize*2; i++) {
+        if (check(matrix_chromo+i*sz_task)) {
+            score = gaObject(matrix_chromo+i*sz_task);
+            if (score == 0.0f) {
+                fprintf(stderr, "Error, for zero score\n");
+            } else {
+                array_fitvalue[i] = 1.0f / score;
+            }
+        } else {
+            // set 0.0f, if not pass checker
+            array_fitvalue[i] = 0.0f;
+        }
+        sum += array_fitvalue[i];
+        printf("%f\n", array_fitvalue[i]);
+    }
+
+    // normalize the fitness value
+    for (i = 0; i < ga_popsize*2; i++) {
+        array_fitvalue[i] = array_fitvalue[i] / sum;
+    }
+}
+
+static int fitvalueCompare(const void *a, const void *b)
+{
+    return (array_fitvalue[(*(size_t *)a)-1] < array_fitvalue[(*(size_t *)b)-1]);
+}
+
+
