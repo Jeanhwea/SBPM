@@ -463,7 +463,7 @@ static void calcAllFitvalue()
 
 static int fitvalueCompare(const void *a, const void *b)
 {
-    return (array_fitvalue[(*(size_t *)a)-1] < array_fitvalue[(*(size_t *)b)-1]);
+    return (array_fitvalue[(*(size_t *)a)-1] < array_fitvalue[(*(size_t *)b)-1]) ? 1: -1;
 }
 
 
