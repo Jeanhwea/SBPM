@@ -11,6 +11,7 @@ float  ga_prob_mutation;
 
 // chromosome for [sz_taks * ga_popsize*2]
 int * matrix_chromo;
+int * matrix_chromo_tmp;
 
 
 /************************************************************************/
@@ -62,15 +63,21 @@ void gaEvolve()
     }
     dbDisplayWorld();
 
-    for (n = 99; n < ga_ngen; n++) {
+    for (n = 0; n < ga_ngen; n++) {
         printf("\n--------------- %3d -------------------\n", n);
-        for (i = 0; i < ga_popsize / 2; i++) {
+        for (i = 0; i < ga_popsize/2; i++) {
             int * dad, * mom, * bro, * sis;
-            dad = matrix_chromo + 2*i*sz_task;
-            mom = matrix_chromo + (2*i+1)*sz_task;
-            bro = dad + ga_popsize*sz_task;
-            sis = mom + ga_popsize*sz_task;
+            int a, b;
+            a = genRandInt(0, ga_popsize-1);
+            b = genRandInt(0, ga_popsize-1);
+            dad = matrix_chromo + a*sz_task;
+            mom = matrix_chromo + b*sz_task;
+            bro = matrix_chromo + (2*i+ga_popsize)*sz_task;
+            sis = matrix_chromo + (2*i+1+ga_popsize)*sz_task;
             gaCrossover(dad, mom, bro, sis);
+        }
+        for (i = 0; i < ga_popsize*2; i++) {
+            gaMutation(matrix_chromo+i*sz_task);
         }
         dbDisplayWorld();
 
@@ -89,8 +96,8 @@ void gaEvolve()
 
 void gaInitPara()
 {
-    ga_popsize        = 8;
-    ga_ngen           = 100;
+    ga_popsize        = 80;
+    ga_ngen           = 10;
     ga_prob_crossover = 0.8f;
     ga_prob_mutation  = 0.005f;
 }
@@ -257,9 +264,15 @@ void gaSelection()
 {
     size_t i, j;
     calcAllFitvalue();
-    dbPrintFitvalue();
+    // dbPrintFitvalue();
     qsort(array_fitval_order, 2*ga_popsize, sizeof(size_t), fitvalueCompare);
     dbPrintFitvalue();
+
+
+    for (i = 0; i < ga_popsize*2; i++) {
+        personCopy(matrix_chromo_tmp+i*sz_task, matrix_chromo+(array_fitval_order[i]-1)*sz_task, 0, sz_task);
+    }
+    memcpy(matrix_chromo, matrix_chromo_tmp, sz_task*ga_popsize*2*sizeof(int));
 }
 
 int gaAllocMemory()
@@ -268,11 +281,17 @@ int gaAllocMemory()
     matrix_chromo = (int *) calloc(sz_task * ga_popsize * 2, sizeof(int));
     assert(matrix_chromo != 0);
 
+    matrix_chromo_tmp = (int *) calloc(sz_task * ga_popsize * 2, sizeof(int));
+    assert(matrix_chromo_tmp != 0);
+
     array_fitvalue = (float *) calloc(ga_popsize * 2, sizeof(float));
     assert(array_fitvalue != 0);
 
     array_fitval_order = (size_t *)calloc(ga_popsize * 2, sizeof(size_t));
     assert(array_fitval_order != 0);
+    for (size_t i = 0; i < ga_popsize*2; i++) {
+        array_fitval_order[i] = i+1;
+    }
 
     return 0;
 }
@@ -449,16 +468,17 @@ static void calcAllFitvalue()
             }
         } else {
             // set 0.0f, if not pass checker
+            score = 0.0f;
             array_fitvalue[i] = 0.0f;
         }
         sum += array_fitvalue[i];
-        printf("%f\n", array_fitvalue[i]);
+        printf("%f\n", score);
     }
 
     // normalize the fitness value
-    for (i = 0; i < ga_popsize*2; i++) {
-        array_fitvalue[i] = array_fitvalue[i] / sum;
-    }
+    // for (i = 0; i < ga_popsize*2; i++) {
+    //     array_fitvalue[i] = array_fitvalue[i] / sum;
+    // }
 }
 
 static int fitvalueCompare(const void *a, const void *b)
