@@ -87,8 +87,9 @@ static void dbPrintFitvalue()
 {
     size_t i;
     printf("index\ttask_id\tfitval\n");
-    for (i = 0; i < ga_popsize*2; i++)
+    for (i = 0; i < ga_popsize*2; i++) {
         printf("%d\t%d\t%f\n", i, array_fitval_order[i], array_fitvalue[array_fitval_order[i]-1]);
+    }
 }
 
 
@@ -106,7 +107,7 @@ void gaEvolve()
     dbDisplayWorld();
 
     for (n = 0; n < ga_ngen; n++) {
-        printf("\n--------------- %3d -------------------\n", n);
+        // printf("\n--------------- %3d -------------------\n", n);
         for (i = 0; i < ga_popsize/2; i++) {
             int * dad, * mom, * bro, * sis;
             int a, b;
@@ -164,6 +165,7 @@ void gaInit(int * person)
         }
 
         swapBits(a, b, person);
+        // swap(person[a], person[b]);
     }
 }
 
@@ -205,7 +207,7 @@ void gaCrossover(int * dad, int * mom, int * bro, int * sis)
                 }
             }
         }
-        
+
         // dbPrint(bro, sz_task, "bro-con");
         // dbPrint(sis, sz_task, "sis-con");
         // dbPrint(dad_new, sz_task, "bro-ord");
@@ -303,7 +305,10 @@ void gaStatistics()
             cnt_best_score++;
     }
 
-    printf("best_score = %f in %f%%\n", best_score ,cnt_best_score / (float)(ga_popsize*2) * 100);
+    //printf("best_score = %f in %f%%\n", best_score ,cnt_best_score / (float)(ga_popsize*2) * 100);
+    for (i = 0; i < ga_popsize; i++) {
+        printf("%f%c", array_fitvalue[array_fitval_order[i]-1], i==ga_popsize-1 ? '\n': ' ');
+    }
 }
 
 int gaAllocMemory()
@@ -498,14 +503,15 @@ static void calcAllFitvalue()
         if (check(matrix_chromo+i*sz_task)) {
             score = gaObject(matrix_chromo+i*sz_task);
             if (score == 0.0f) {
+                array_fitvalue[i] = INF_DURATION;
                 fprintf(stderr, "Error, for zero score\n");
             } else {
-                array_fitvalue[i] = 1.0f / score;
+                array_fitvalue[i] = score;
             }
         } else {
             // set 0.0f, if not pass checker
-            score = 0.0f;
-            array_fitvalue[i] = 0.0f;
+            score = INF_DURATION;
+            array_fitvalue[i] = INF_DURATION;
         }
         sum += array_fitvalue[i];
         // printf("%f\n", score);
@@ -519,7 +525,7 @@ static void calcAllFitvalue()
 
 static int fitvalueCompare(const void *a, const void *b)
 {
-    return (array_fitvalue[(*(size_t *)a)-1] < array_fitvalue[(*(size_t *)b)-1]) ? 1: -1;
+    return (array_fitvalue[(*(size_t *)a)-1] > array_fitvalue[(*(size_t *)b)-1]) ? 1: -1;
 }
 
 

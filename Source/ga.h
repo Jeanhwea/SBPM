@@ -2,6 +2,8 @@
 #define _GA_H_
 #include <string>
 
+#define INF_DURATION FLT_MAX
+
 using namespace std;
 
 extern size_t ga_popsize;
