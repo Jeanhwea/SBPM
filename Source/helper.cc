@@ -29,3 +29,19 @@ float genRandProb()
     int randInt = rand() % 100000;
     return (float)(randInt) / 100000.0f;
 }
+
+/************************************************************************/
+/* find a inversion number of a sequence                                */
+/************************************************************************/
+unsigned long hash(int * person, size_t num)
+{
+    unsigned long ret = 0;
+    size_t i, j;
+    for (i = 0; i < num; i++) {
+        for (j = i+1; j < num; j++) {
+            if (person[i] > person[j])
+                ret++;
+        }
+    }
+    return ret;
+}
