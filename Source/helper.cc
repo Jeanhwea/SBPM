@@ -1,5 +1,8 @@
 #include "helper.h"
 
+static unsigned long nInversion(int * person, size_t num);
+
+
 bool isSrand = false;
 
 /************************************************************************/
@@ -33,7 +36,7 @@ float genRandProb()
 /************************************************************************/
 /* find a inversion number of a sequence                                */
 /************************************************************************/
-unsigned long hash(int * person, size_t num)
+static unsigned long nInversion(int * person, size_t num)
 {
     unsigned long ret = 0;
     size_t i, j;
@@ -43,5 +46,12 @@ unsigned long hash(int * person, size_t num)
                 ret++;
         }
     }
+    return ret;
+}
+
+unsigned long hash(int * person, size_t num)
+{
+    unsigned long ret = nInversion(person, num);
+    // ret += person[0] * num*(num-1)/2;
     return ret;
 }

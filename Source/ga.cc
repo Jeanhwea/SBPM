@@ -13,7 +13,6 @@ float  ga_prob_mutation;
 int * matrix_chromo;
 int * matrix_chromo_tmp;
 
-
 /************************************************************************/
 /* you can get fitness value like this:                                 */
 /*      array_fitvalue[ task_id-1 ]];                                   */
@@ -24,6 +23,10 @@ float * array_fitvalue;
 /*      array_fitval_order[ task_id-1 ];                                */
 /************************************************************************/
 size_t * array_fitval_order;
+/************************************************************************/
+/* hash value for each person                                           */
+/************************************************************************/
+unsigned long * array_hashval;
 
 using namespace std;
 void gaInitPara();
@@ -41,6 +44,8 @@ static void personCopy(int * des, int * src, size_t begin, size_t n);
 static int * personNew(int * old_person, size_t n);
 static void personDestroy(int * person);
 static void personClear(int * person, size_t n);
+static void personMoveForward(int * person, size_t ele_index, size_t step);
+
 static void calcAllFitvalue();
 static int fitvalueCompare(const void *a, const void *b);
 
@@ -329,6 +334,9 @@ int gaAllocMemory()
         array_fitval_order[i] = i+1;
     }
 
+    array_hashval = (unsigned long *) calloc(ga_popsize * 2, sizeof(unsigned long));
+    assert(array_hashval != 0);
+
     return 0;
 }
 
@@ -352,6 +360,11 @@ int gaFreeMemory()
     if (array_fitval_order != 0) {
         free(array_fitval_order);
         array_fitval_order = 0;
+    }
+
+    if (array_hashval != 0) {
+        free(array_hashval);
+        array_hashval = 0;
     }
 
     return 0;
@@ -418,6 +431,21 @@ static void personClear(int * person, size_t n)
     for (i = 0; i < n; i++) {
         person[i] = 0;
     }
+}
+/************************************************************************/
+/* move a person[ele_index] several steps forward                       */
+/************************************************************************/
+static void personMoveForward(int * person, size_t ele_index, size_t step)
+{
+    int tmp;
+    size_t i;
+    assert(ele_index < sz_task);
+    assert(ele_index + step < sz_task);
+    tmp = person[ele_index];
+    for (i = ele_index; i < ele_index + step - 1; i++) {
+        person[i] = person[i+1];
+    }
+    person[ele_index+step] = tmp;
 }
 
 /************************************************************************/
@@ -528,4 +556,25 @@ static int fitvalueCompare(const void *a, const void *b)
     return (array_fitvalue[(*(size_t *)a)-1] > array_fitvalue[(*(size_t *)b)-1]) ? 1: -1;
 }
 
+void fixPerson(int * person)
+{
+    size_t i, j, step;
+    i = 0;
+    while (i < sz_task) {                       // FOR all tasks listed in person array
 
+        // Number of steps to move elements forward?
+        step = 0;
+        for (j = i+1; j < sz_task; j++) {
+            if (isDepend(person[j], person[i]))
+                step = j-i;
+        }
+
+        if (step > 0) {
+            personMoveForward(person, i, step);
+        } else {
+            // if no use to move, then i++
+            i++;
+        }
+
+    }
+}
