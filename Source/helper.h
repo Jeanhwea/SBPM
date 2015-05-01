@@ -6,6 +6,6 @@
 
 int genRandInt(int min, int max);
 float genRandProb();
-unsigned long hash(int * person, size_t num);
+unsigned long hashfunc(int * person, size_t num);
 
 #endif // !_HELPER_H_

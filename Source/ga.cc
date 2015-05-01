@@ -48,7 +48,7 @@ static void personMoveForward(int * person, size_t ele_index, size_t step);
 
 static void calcAllFitvalue();
 static int fitvalueCompare(const void *a, const void *b);
-
+static void fixPerson(int * person);
 void scheFCFS(int * person);
 
 // debug functions
@@ -113,6 +113,9 @@ void gaEvolve()
 
     for (n = 0; n < ga_ngen; n++) {
         // printf("\n--------------- %3d -------------------\n", n);
+        for (i = 0; i < ga_popsize; i++) {
+            array_hashval[i] = hashfunc(matrix_chromo+i*sz_task, sz_task);
+        }
         for (i = 0; i < ga_popsize/2; i++) {
             int * dad, * mom, * bro, * sis;
             int a, b;
@@ -123,6 +126,8 @@ void gaEvolve()
             bro = matrix_chromo + (2*i+ga_popsize)*sz_task;
             sis = matrix_chromo + (2*i+1+ga_popsize)*sz_task;
             gaCrossover(dad, mom, bro, sis);
+            fixPerson(bro);
+            fixPerson(sis);
         }
         for (i = 0; i < ga_popsize*2; i++) {
             gaMutation(matrix_chromo+i*sz_task);
@@ -432,6 +437,7 @@ static void personClear(int * person, size_t n)
         person[i] = 0;
     }
 }
+
 /************************************************************************/
 /* move a person[ele_index] several steps forward                       */
 /************************************************************************/
@@ -556,7 +562,7 @@ static int fitvalueCompare(const void *a, const void *b)
     return (array_fitvalue[(*(size_t *)a)-1] > array_fitvalue[(*(size_t *)b)-1]) ? 1: -1;
 }
 
-void fixPerson(int * person)
+static void fixPerson(int * person)
 {
     size_t i, j, step;
     i = 0;

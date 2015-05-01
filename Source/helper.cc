@@ -49,7 +49,7 @@ static unsigned long nInversion(int * person, size_t num)
     return ret;
 }
 
-unsigned long hash(int * person, size_t num)
+unsigned long hashfunc(int * person, size_t num)
 {
     unsigned long ret = nInversion(person, num);
     // ret += person[0] * num*(num-1)/2;
