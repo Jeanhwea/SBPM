@@ -161,6 +161,8 @@ int loadInfo()
 /************************************************************************/
 bool isDepend(size_t pred_id, size_t succ_id)
 {
+    assert(pred_id > 0);
+    assert(succ_id > 0);
     assert(pred_id <= sz_task);
     assert(succ_id <= sz_task);
     return matrix_depend[(pred_id-1) + (succ_id-1) * sz_task];
@@ -171,6 +173,8 @@ bool isDepend(size_t pred_id, size_t succ_id)
 /************************************************************************/
 bool isAssign(size_t task_id, size_t reso_id)
 {
+    assert(task_id > 0);
+    assert(reso_id > 0);
     assert(task_id <= sz_task);
     assert(reso_id <= sz_resource);
     return matrix_assign[(task_id-1) + (reso_id-1) * sz_task];
@@ -181,6 +185,7 @@ bool isAssign(size_t task_id, size_t reso_id)
 /************************************************************************/
 float getDuration(size_t task_id)
 {
+    assert(task_id > 0);
     assert(task_id <= sz_task);
     return array_duration[task_id-1];
 }

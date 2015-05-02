@@ -11,22 +11,23 @@ float  ga_prob_mutation;
 
 // chromosome for [sz_taks * ga_popsize*2]
 int * matrix_chromo;
-int * matrix_chromo_tmp;
-
+int * matrix_chromo_slted;
+/************************************************************************/
+/* hash value for each person                                           */
+/************************************************************************/
+unsigned long * array_hashval;
+unsigned long * array_hashval_slted;
 /************************************************************************/
 /* you can get fitness value like this:                                 */
 /*      array_fitvalue[ task_id-1 ]];                                   */
 /************************************************************************/
 float * array_fitvalue;
+float * array_fitvalue_slted;
 /************************************************************************/
 /* you can get ordering of task_id like this:                           */
 /*      array_fitval_order[ task_id-1 ];                                */
 /************************************************************************/
 size_t * array_fitval_order;
-/************************************************************************/
-/* hash value for each person                                           */
-/************************************************************************/
-unsigned long * array_hashval;
 
 using namespace std;
 void gaInitPara();
@@ -34,7 +35,7 @@ void gaInit(int * person);
 void gaCrossover(int * dad, int * mom, int * bro, int * sis);
 void gaMutation(int * person);
 void gaSelection();
-void gaStatistics();
+void gaStatistics(FILE * out);
 static float gaObject(int * person); // object function
 
 // private tool functions
@@ -59,13 +60,13 @@ void dbDisplayWorld();
 void dbDisplayWorld()
 {
     size_t i;
-    for (i = 0; i < ga_popsize*2; i++) {
+    for (i = 0; i < ga_popsize; i++) {;
         char tag[100];
-        sprintf(tag, "chromo(%03d)", i+1);
+        sprintf(tag, "i%d\th%d\tf%f\t",i, array_hashval[i], array_fitvalue[i]);
         dbPrintPerson(matrix_chromo+i*sz_task, sz_task, tag);
     }
 
-    for (i = 0; i < ga_popsize*2; i++) {
+    for (i = 0; i < ga_popsize; i++) {
         if (!check(matrix_chromo + i*sz_task)) {
             fprintf(stderr, "chromo(%3d) failed in check\n", i+1);
         }
@@ -100,44 +101,154 @@ static void dbPrintFitvalue()
 
 void gaEvolve()
 {
-    size_t i, n;
+    size_t i, j, k, n;
+    int * person, * new_person;
+    FILE * fd_info;
+    fd_info = fopen("output.txt", "w");
+    assert(fd_info != 0);
 
 
     gaInitPara();
     gaAllocMemory();
 
-    for (i = 0; i < ga_popsize; i++) {
-        gaInit(matrix_chromo + i * sz_task);
+    // for (i = 0; i < ga_popsize; i++) {
+    //     person = matrix_chromo + i * sz_task;
+    //     gaInit(person);
+    //     array_hashval[i] = hashfunc(person, sz_task);
+    //     array_fitvalue[i] = gaObject(person);
+    // }   
+    i = 0; 
+    while (i < ga_popsize) {
+        new_person = matrix_chromo + i * sz_task;
+        gaInit(new_person);
+        array_hashval[i] = hashfunc(new_person, sz_task);
+
+        bool skip_flag = true;
+        for (j = 0; j < i; j++) {
+            // check for this individual
+            if (array_hashval[i] == array_hashval[j]) {
+                person = matrix_chromo + j*sz_task;
+                for (k = 0; k < sz_task; k++) {
+                    if (new_person[k] != person[k])
+                        break;
+                }
+                if (k == sz_task) {
+                    // need re-initialization
+                    skip_flag = false;
+                    break;
+                }
+            }
+        }
+        if (skip_flag) {
+            // skip this individual if passed check
+            array_fitvalue[i] = gaObject(new_person);
+            i++;
+        } else {
+            fprintf(stderr, "re-initialization\n");
+        }
     }
+    printf("\n--------------- initial -------------------\n");
     dbDisplayWorld();
 
     for (n = 0; n < ga_ngen; n++) {
-        // printf("\n--------------- %3d -------------------\n", n);
-        for (i = 0; i < ga_popsize; i++) {
-            array_hashval[i] = hashfunc(matrix_chromo+i*sz_task, sz_task);
-        }
-        for (i = 0; i < ga_popsize/2; i++) {
+        printf("\n--------------- %3d -------------------\n", n);
+        // for (i = 0; i < ga_popsize; i++) {
+        //     array_hashval[i] = hashfunc(matrix_chromo+i*sz_task, sz_task);
+        // }
+        // for (i = 0; i < ga_popsize/2; i++) {
+        //     int * dad, * mom, * bro, * sis;
+        //     int a, b;
+        //     a = genRandInt(0, ga_popsize-1);
+        //     b = genRandInt(0, ga_popsize-1);
+        //     dad = matrix_chromo + a*sz_task;
+        //     mom = matrix_chromo + b*sz_task;
+        //     bro = matrix_chromo + (2*i+ga_popsize)*sz_task;
+        //     sis = matrix_chromo + (2*i+1+ga_popsize)*sz_task;
+        //     gaCrossover(dad, mom, bro, sis);
+        //     fixPerson(bro);
+        //     fixPerson(sis);
+        // }
+
+        i = ga_popsize;
+        while (i < 2*ga_popsize-1) {
             int * dad, * mom, * bro, * sis;
             int a, b;
+
+            // randomly choose a dad and a mom
             a = genRandInt(0, ga_popsize-1);
             b = genRandInt(0, ga_popsize-1);
             dad = matrix_chromo + a*sz_task;
             mom = matrix_chromo + b*sz_task;
-            bro = matrix_chromo + (2*i+ga_popsize)*sz_task;
-            sis = matrix_chromo + (2*i+1+ga_popsize)*sz_task;
+
+            // get bro and sis 's pointer
+            bro = matrix_chromo + i*sz_task;
+            sis = matrix_chromo + (i+1)*sz_task;
             gaCrossover(dad, mom, bro, sis);
-            fixPerson(bro);
-            fixPerson(sis);
+
+            // fix each individual for their violation of constraint
+            if (!check(bro)) {
+                fixPerson(bro);
+            }
+            if (!check(sis)) {
+                fixPerson(sis);
+            }
+            array_hashval[i]   = hashfunc(bro, sz_task);
+            array_hashval[i+1] = hashfunc(sis, sz_task);
+
+            bool skip_flag = true;
+            for (j = 0; j < i; j++) {
+                // check for brother
+                if (array_hashval[i] == array_hashval[j]) {
+                    person = matrix_chromo + j*sz_task;
+                    for (k = 0; k < sz_task; k++) {
+                        if (bro[k] != person[k])
+                            break;
+                    }
+                    if (k == sz_task) {
+                        // need re-crossover
+                        skip_flag = false;
+                        break;
+                    }
+                }
+                // check for sister
+                if (array_hashval[i+1] == array_hashval[j]) {
+                    person = matrix_chromo + j*sz_task;
+                    for (k = 0; k < sz_task; k++) {
+                        if (sis[k] != person[k])
+                            break;
+                    }
+                    if (k == sz_task) {
+                        // need re-crossover
+                        skip_flag = false;
+                        break;
+                    }
+                }
+            }
+            if (skip_flag) {
+                // skip this bro & sis if passed check
+                i += 2;
+            } else {
+                fprintf(stderr, "re-crossover\n");
+            }
         }
+
         for (i = 0; i < ga_popsize*2; i++) {
             gaMutation(matrix_chromo+i*sz_task);
         }
-        // dbDisplayWorld();
 
+        // calculate attribution of children
+        for (i = ga_popsize; i < ga_popsize*2; i++) {
+            person = matrix_chromo+i*sz_task;
+            array_fitvalue[i] = gaObject(person);
+            array_hashval[i] = hashfunc(person, sz_task);
+        }
         // dbPrintInfo();
+
         gaSelection();
-        gaStatistics();
-    }
+        gaStatistics(fd_info);
+        dbDisplayWorld();
+
+    } // end of this generation
 
 
     // dbPrint(matrix_chromo, sz_task, "chromosome(001)");
@@ -145,6 +256,7 @@ void gaEvolve()
     // dbPrint(matrix_chromo+sz_task*ga_popsize, sz_task, "chromosome(009)");
     // dbPrint(matrix_chromo+sz_task*(ga_popsize+1), sz_task, "chromosome(010)");
 
+    fclose(fd_info);
     gaFreeMemory();
 }
 
@@ -272,8 +384,8 @@ void gaMutation(int * person)
             swap(a, b);
         }
 
-        // swapBits(a, b, person);
-        swap(person[a], person[b]);
+        swapBits(a, b, person);
+        // swap(person[a], person[b]);
     }
 
 }
@@ -285,63 +397,68 @@ void gaMutation(int * person)
 void gaSelection()
 {
     size_t i;
-    calcAllFitvalue();
-    // dbPrintFitvalue();
 
+    // initial ordering first
+    for (i = 0; i < ga_popsize*2; i++) {
+        array_fitval_order[i] = i+1;
+    }
     qsort(array_fitval_order, 2*ga_popsize, sizeof(size_t), fitvalueCompare);
     // dbPrintFitvalue();
 
 
-    for (i = 0; i < ga_popsize*2; i++) {
-        personCopy(matrix_chromo_tmp+i*sz_task, matrix_chromo+(array_fitval_order[i]-1)*sz_task, 0, sz_task);
+    size_t selected_id;
+    for (i = 0; i < ga_popsize; i++) {
+        selected_id = array_fitval_order[i]-1;
+        personCopy(matrix_chromo_slted+i*sz_task, matrix_chromo+(selected_id)*sz_task, 0, sz_task);
+        array_fitvalue_slted[i] = array_fitvalue[selected_id];
+        array_hashval_slted[i] = array_hashval[selected_id];
     }
-    memcpy(matrix_chromo, matrix_chromo_tmp, sz_task*ga_popsize*2*sizeof(int));
+    // move the selected value to next generation
+    memcpy(matrix_chromo, matrix_chromo_slted, ga_popsize*sz_task*sizeof(int));
+    memcpy(array_fitvalue, array_fitvalue_slted, ga_popsize*sizeof(float));
+    memcpy(array_hashval, array_hashval_slted, ga_popsize*sizeof(unsigned long));
 }
 
 /************************************************************************/
 /* Statistics of some important information.                            */
 /************************************************************************/
-void gaStatistics()
+void gaStatistics(FILE * out)
 {
-    size_t i, j;
-    
-    int cnt_best_score;
-    float best_score;
-    
-    cnt_best_score = 1;
-    best_score = array_fitvalue[array_fitval_order[0]-1];
-    for (i = 1; i < ga_popsize*2; i++) {
-        if (array_fitvalue[array_fitval_order[i]-1] == best_score)
-            cnt_best_score++;
-    }
+    size_t i;
 
-    //printf("best_score = %f in %f%%\n", best_score ,cnt_best_score / (float)(ga_popsize*2) * 100);
     for (i = 0; i < ga_popsize; i++) {
-        printf("%f%c", array_fitvalue[array_fitval_order[i]-1], i==ga_popsize-1 ? '\n': ' ');
+        fprintf(out, "%f%c", array_fitvalue[i], i==ga_popsize-1 ? '\n': ' ');
     }
 }
 
 int gaAllocMemory()
 {
 
+    // chromosome attribution of a person
     matrix_chromo = (int *) calloc(sz_task * ga_popsize * 2, sizeof(int));
     assert(matrix_chromo != 0);
+    matrix_chromo_slted = (int *) calloc(sz_task * ga_popsize, sizeof(int));
+    assert(matrix_chromo_slted != 0);
 
-    matrix_chromo_tmp = (int *) calloc(sz_task * ga_popsize * 2, sizeof(int));
-    assert(matrix_chromo_tmp != 0);
+    // hash value attribution of a person
+    array_hashval = (unsigned long *) calloc(ga_popsize * 2, sizeof(unsigned long));
+    assert(array_hashval != 0);
+    array_hashval_slted = (unsigned long *) calloc(ga_popsize, sizeof(unsigned long));
+    assert(array_hashval_slted != 0);
 
+    // fitness value attribution of a person
     array_fitvalue = (float *) calloc(ga_popsize * 2, sizeof(float));
     assert(array_fitvalue != 0);
+    array_fitvalue_slted = (float *) calloc(ga_popsize, sizeof(float));
+    assert(array_fitvalue_slted != 0);
 
+    // for selection ordering
     array_fitval_order = (size_t *)calloc(ga_popsize * 2, sizeof(size_t));
     assert(array_fitval_order != 0);
     for (size_t i = 0; i < ga_popsize*2; i++) {
         array_fitval_order[i] = i+1;
     }
-
-    array_hashval = (unsigned long *) calloc(ga_popsize * 2, sizeof(unsigned long));
-    assert(array_hashval != 0);
-
+    
     return 0;
 }
 
@@ -351,25 +468,32 @@ int gaFreeMemory()
         free(matrix_chromo);
         matrix_chromo = 0;
     }
-
-    if (matrix_chromo_tmp != 0) {
-        free(matrix_chromo_tmp);
-        matrix_chromo_tmp = 0;
-    }
-
-    if (array_fitvalue != 0) {
-        free(array_fitvalue);
-        array_fitvalue = 0;
-    }
-
-    if (array_fitval_order != 0) {
-        free(array_fitval_order);
-        array_fitval_order = 0;
+    if (matrix_chromo_slted != 0) {
+        free(matrix_chromo_slted);
+        matrix_chromo_slted = 0;
     }
 
     if (array_hashval != 0) {
         free(array_hashval);
         array_hashval = 0;
+    }
+    if (array_hashval_slted != 0) {
+        free(array_hashval_slted);
+        array_hashval_slted = 0;
+    }
+    
+    if (array_fitvalue != 0) {
+        free(array_fitvalue);
+        array_fitvalue = 0;
+    }
+    if (array_fitvalue_slted != 0) {
+        free(array_fitvalue_slted);
+        array_fitvalue_slted = 0;
+    }
+
+    if (array_fitval_order != 0) {
+        free(array_fitval_order);
+        array_fitval_order = 0;
     }
 
     return 0;
@@ -448,7 +572,7 @@ static void personMoveForward(int * person, size_t ele_index, size_t step)
     assert(ele_index < sz_task);
     assert(ele_index + step < sz_task);
     tmp = person[ele_index];
-    for (i = ele_index; i < ele_index + step - 1; i++) {
+    for (i = ele_index; i < ele_index + step; i++) {
         person[i] = person[i+1];
     }
     person[ele_index+step] = tmp;
@@ -479,8 +603,17 @@ static bool check(int * person)
 static float gaObject(int * person)
 {
     float score;
-    scheFCFS(person);
-    score = getOverheadDuration();
+    if (check(person)) {
+        scheFCFS(person);
+        score = getOverheadDuration();
+        if (score == 0.0f) {
+            score = INF_DURATION;
+            fprintf(stderr, "Error, for zero score\n");
+        }
+    } else {
+        fprintf(stderr, "Error, for a person is not pass check\n");
+        score = INF_DURATION;
+    }
     return score;
 }
 
