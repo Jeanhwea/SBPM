@@ -49,9 +49,14 @@ static unsigned long nInversion(int * person, size_t num)
     return ret;
 }
 
+#define HASH_SHIFT (3)
+#define HASH_SIZE (19921104)
 unsigned long hashfunc(int * person, size_t num)
 {
-    unsigned long ret = nInversion(person, num);
-    // ret += person[0] * num*(num-1)/2;
-    return ret;
+    unsigned long hash_value;
+    hash_value = 0;
+    for (size_t i = 0; i < num; i++) {
+        hash_value = (((unsigned long)person[i] + hash_value) << HASH_SHIFT ) % HASH_SIZE;
+    }
+    return hash_value;
 }
