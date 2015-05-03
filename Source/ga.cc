@@ -62,7 +62,7 @@ void dbDisplayWorld()
     size_t i;
     for (i = 0; i < ga_popsize; i++) {;
         char tag[100];
-        sprintf(tag, "i%d\th%d\tf%f\t",i, array_hashval[i], array_fitvalue[i]);
+        sprintf(tag, "i%04d\th%08d\tf%f\t",i, array_hashval[i], array_fitvalue[i]);
         dbPrintPerson(matrix_chromo+i*sz_task, sz_task, tag);
     }
 
@@ -262,7 +262,7 @@ void gaEvolve()
 
 void gaInitPara()
 {
-    ga_popsize        = 80;
+    ga_popsize        = 200;
     ga_ngen           = 100;
     ga_prob_crossover = 0.8f;
     ga_prob_mutation  = 0.005f;
