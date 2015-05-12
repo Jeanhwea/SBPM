@@ -1,3 +1,9 @@
+/**
+ * File: helper.cc
+ * Author: Jeanhwea
+ * Email: hujinghui@buaa.edu.cn
+ */
+
 #include "helper.h"
 
 static unsigned long nInversion(int * person, size_t num);

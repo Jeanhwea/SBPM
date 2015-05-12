@@ -1,3 +1,9 @@
+/**
+ * File: helper.h
+ * Author: Jeanhwea
+ * Email: hujinghui@buaa.edu.cn
+ */
+
 #ifndef _HELPER_H_
 #define _HELPER_H_
 #include <stdlib.h>

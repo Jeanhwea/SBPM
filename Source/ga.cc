@@ -1,3 +1,9 @@
+/**
+ * File: ga.cc
+ * Author: Jeanhwea
+ * Email: hujinghui@buaa.edu.cn
+ */
+
 #include "ga.h"
 #include "helper.h"
 #include "data.h"

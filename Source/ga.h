@@ -1,3 +1,9 @@
+/**
+ * File: ga.h
+ * Author: Jeanhwea
+ * Email: hujinghui@buaa.edu.cn
+ */
+
 #ifndef _GA_H_
 #define _GA_H_
 #include <string>
