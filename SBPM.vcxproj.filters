@@ -56,5 +56,11 @@
     <ClInclude Include="Source\helper.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="Source\helper_timer.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\exception.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

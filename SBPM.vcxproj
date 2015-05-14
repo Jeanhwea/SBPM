@@ -22,8 +22,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\data.h" />
+    <ClInclude Include="Source\exception.h" />
     <ClInclude Include="Source\ga.h" />
     <ClInclude Include="Source\helper.h" />
+    <ClInclude Include="Source\helper_timer.h" />
     <ClInclude Include="Source\tinyxml\tinystr.h" />
     <ClInclude Include="Source\tinyxml\tinyxml.h" />
   </ItemGroup>

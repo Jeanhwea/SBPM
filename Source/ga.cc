@@ -7,6 +7,7 @@
 #include "ga.h"
 #include "helper.h"
 #include "data.h"
+#include "helper_timer.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -107,6 +108,9 @@ static void dbPrintFitvalue()
 
 void gaEvolve()
 {
+    StopWatchInterface * timer = NULL;
+    float elapse_time_inMs = 0.0f;
+
     size_t i, j, k, n;
     int * person, * new_person;
     FILE * fd_info;
@@ -122,7 +126,12 @@ void gaEvolve()
     //     gaInit(person);
     //     array_hashval[i] = hashfunc(person, sz_task);
     //     array_fitvalue[i] = gaObject(person);
-    // }   
+    // }
+
+    // starting timer ...
+    sdkCreateTimer(&timer);
+    sdkStartTimer(&timer);
+
     i = 0; 
     while (i < ga_popsize) {
         new_person = matrix_chromo + i * sz_task;
@@ -150,7 +159,7 @@ void gaEvolve()
             array_fitvalue[i] = gaObject(new_person);
             i++;
         } else {
-            fprintf(stderr, "re-initialization\n");
+           // fprintf(stderr, "re-initialization\n");
         }
     }
     printf("\n--------------- initial -------------------\n");
@@ -234,7 +243,7 @@ void gaEvolve()
                 // skip this bro & sis if passed check
                 i += 2;
             } else {
-                fprintf(stderr, "re-crossover\n");
+               // fprintf(stderr, "re-crossover\n");
             }
         }
 
@@ -256,12 +265,15 @@ void gaEvolve()
 
     } // end of this generation
 
+    sdkStopTimer(&timer);
+    elapse_time_inMs = sdkGetTimerValue(&timer);
 
     // dbPrint(matrix_chromo, sz_task, "chromosome(001)");
     // dbPrint(matrix_chromo+sz_task, sz_task, "chromosome(002)");
     // dbPrint(matrix_chromo+sz_task*ga_popsize, sz_task, "chromosome(009)");
     // dbPrint(matrix_chromo+sz_task*(ga_popsize+1), sz_task, "chromosome(010)");
-
+    
+    printf("total time in CPU = %f ms\n", elapse_time_inMs);
     fclose(fd_info);
     gaFreeMemory();
 }
@@ -270,7 +282,7 @@ void gaInitPara()
 {
     ga_popsize        = 200;
     ga_ngen           = 100;
-    ga_prob_crossover = 0.8f;
+    ga_prob_crossover = 1.0f;
     ga_prob_mutation  = 0.005f;
 }
 
